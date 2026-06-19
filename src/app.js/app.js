@@ -9,7 +9,7 @@ const morgan =
 
 const authRoutes =
   require(
-    "./routes/authRoutes"
+    "../routes/authRoutes"
   );
 
 const app =
