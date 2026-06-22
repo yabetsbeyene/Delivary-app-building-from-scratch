@@ -5,19 +5,22 @@ const router =
 const auth =
   require("../middleware/authMiddleware");
 
-const role =
-  require("../middleware/roleMiddleware");
-
 const {
-  dashboard
+  placeOrder,
+  getMyOrders
 } =
-  require("../controllers/adminController");
+  require("../controllers/orderController");
 
 router.get(
-  "/dashboard",
+  "/",
   auth,
-  role("admin"),
-  dashboard
+  getMyOrders
+);
+
+router.post(
+  "/",
+  auth,
+  placeOrder
 );
 
 module.exports =

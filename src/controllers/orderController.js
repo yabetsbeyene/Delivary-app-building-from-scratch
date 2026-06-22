@@ -2,7 +2,26 @@ const Order =
   require("../models/Order");
 
 const Cart =
-  require("../models/Cart");
+  require("../models/cart");
+
+exports.getMyOrders =
+  async (req, res) => {
+
+    const orders =
+      await Order.find({
+        customer:
+          req.user._id
+      })
+        .populate(
+          "items.product"
+        )
+        .sort({
+          createdAt:
+            -1
+        });
+
+    res.json(orders);
+  };
 
 exports.placeOrder =
   async (req, res) => {
@@ -15,7 +34,7 @@ exports.placeOrder =
         "items.product"
       );
 
-    if (!cart) {
+    if (!cart || cart.items.length === 0) {
 
       return res.status(404).json({
         message:
@@ -42,8 +61,20 @@ exports.placeOrder =
         customer:
           req.user._id,
 
+        merchant:
+          cart.items[0]?.product?.merchant,
+
         items:
-          cart.items,
+          cart.items.map(
+            item => ({
+              product:
+                item.product._id,
+              quantity:
+                item.quantity,
+              price:
+                item.product.price
+            })
+          ),
 
         totalAmount:
           total

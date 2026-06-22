@@ -2,7 +2,7 @@ const Order =
   require("../models/Order");
 
 const Cart =
-  require("../models/Cart");
+  require("../models/cart");
 
 exports.placeOrder =
   async (req, res) => {

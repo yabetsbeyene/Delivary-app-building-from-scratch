@@ -1,5 +1,6 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const User = require('../src/models/user');
 const Product = require('../src/models/Product');
@@ -27,21 +28,21 @@ async function seed() {
     const admin = await User.create({
       name: 'Admin User',
       email: 'admin@example.com',
-      password: 'adminpass',
+      password: await bcrypt.hash('adminpass', 10),
       role: 'admin'
     });
 
     const merchant = await User.create({
       name: 'Merchant One',
       email: 'merchant@example.com',
-      password: 'merchantpass',
+      password: await bcrypt.hash('merchantpass', 10),
       role: 'merchant'
     });
 
     const customer = await User.create({
       name: 'Customer One',
       email: 'customer@example.com',
-      password: 'customerpass',
+      password: await bcrypt.hash('customerpass', 10),
       role: 'customer'
     });
 

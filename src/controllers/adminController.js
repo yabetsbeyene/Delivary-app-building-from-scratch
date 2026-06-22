@@ -1,5 +1,5 @@
 const User =
-  require("../models/User");
+  require("../models/user");
 
 const Product =
   require("../models/Product");

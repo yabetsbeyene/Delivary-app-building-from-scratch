@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const User = require("../models/user");
 
 const bcrypt = require("bcryptjs");
 
@@ -10,8 +10,22 @@ exports.register =
     const {
       name,
       email,
-      password
+      password,
+      phone,
+      role
     } = req.body;
+
+    const existingUser =
+      await User.findOne({
+        email
+      });
+
+    if (existingUser) {
+      return res.status(409).json({
+        message:
+          "Email already registered"
+      });
+    }
 
     const hashedPassword =
       await bcrypt.hash(
@@ -24,10 +38,20 @@ exports.register =
         name,
         email,
         password:
-          hashedPassword
+          hashedPassword,
+        phone,
+        role
       });
 
-    res.status(201).json(user);
+    res.status(201).json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role
+      }
+    });
 };
 
 exports.login =
@@ -76,6 +100,13 @@ exports.login =
       );
 
     res.json({
-      token
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role
+      }
     });
 };
