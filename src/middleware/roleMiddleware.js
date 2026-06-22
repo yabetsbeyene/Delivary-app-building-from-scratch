@@ -1,37 +1,23 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-
-module.exports = async (req, res, next) => {
-  try {
-
-    const token =
-      req.header("Authorization")
-        ?.replace("Bearer ", "");
-
-    if (!token) {
-      return res.status(401).json({
-        message: "No token"
-      });
+// roleMiddleware(requiredRole) -> returns middleware that assumes authMiddleware
+// has already authenticated the user and set req.user.
+module.exports = function(requiredRole) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const decoded =
-      jwt.verify(
-        token,
-        process.env.JWT_SECRET
-      );
+    if (!req.user.role) {
+      return res.status(403).json({ message: "Forbidden: role missing" });
+    }
 
-    req.user =
-      await User.findById(
-        decoded.id
-      );
+    const allowed = Array.isArray(requiredRole)
+      ? requiredRole
+      : [requiredRole];
+
+    if (!allowed.includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
 
     next();
-
-  } catch (error) {
-
-    return res.status(401).json({
-      message: "Unauthorized"
-    });
-
-  }
+  };
 };
