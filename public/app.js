@@ -1,4 +1,4 @@
-const { useEffect, useMemo, useState } = React;
+const { useEffect, useMemo, useRef, useState } = React;
 
 const API = "/api";
 
@@ -7,6 +7,44 @@ const fallbackImages = [
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80"
+];
+
+const deliveryLocations = [
+  {
+    name: "Central Kitchen",
+    type: "Main pickup hub",
+    area: "Piassa",
+    eta: "15-25 min",
+    coordinates: [9.035, 38.752]
+  },
+  {
+    name: "Bole Partner Row",
+    type: "Restaurant cluster",
+    area: "Bole",
+    eta: "20-30 min",
+    coordinates: [8.994, 38.79]
+  },
+  {
+    name: "Kazanchis Express",
+    type: "Fast dispatch point",
+    area: "Kazanchis",
+    eta: "18-28 min",
+    coordinates: [9.018, 38.765]
+  },
+  {
+    name: "Megenagna Market",
+    type: "Premium vendors",
+    area: "Megenagna",
+    eta: "30-45 min",
+    coordinates: [9.028, 38.802]
+  },
+  {
+    name: "Mexico Route Desk",
+    type: "West side delivery point",
+    area: "Mexico Square",
+    eta: "25-40 min",
+    coordinates: [9.01, 38.742]
+  }
 ];
 
 function App() {
@@ -276,6 +314,9 @@ function App() {
         view === "orders" && React.createElement(OrdersView, {
           orders
         }),
+        view === "map" && React.createElement(MapView, {
+          locations: deliveryLocations
+        }),
         view === "admin" && React.createElement(AdminView, {
           stats,
           loadStats
@@ -298,6 +339,7 @@ function Topbar({ user, view, setView, logout, cartCount }) {
         React.createElement(Tab, { active: view === "shop", onClick: () => setView("shop") }, "Shop"),
         React.createElement(Tab, { active: view === "cart", onClick: () => setView("cart") }, `Cart ${cartCount ? `(${cartCount})` : ""}`),
         React.createElement(Tab, { active: view === "orders", onClick: () => setView("orders") }, "Orders"),
+        React.createElement(Tab, { active: view === "map", onClick: () => setView("map") }, "Map"),
         canMerchant && React.createElement(Tab, { active: view === "merchant", onClick: () => setView("merchant") }, "Merchant"),
         canAdmin && React.createElement(Tab, { active: view === "admin", onClick: () => setView("admin") }, "Admin")
       ),
@@ -347,9 +389,10 @@ function ShopView(props) {
           React.createElement("p", { className: "eyebrow" }, "Fresh orders, clean operations"),
           React.createElement("h1", null, "Delivery Hub"),
           React.createElement("p", null, "A polished storefront for customers, a simple product desk for merchants, and fast operational numbers for admins."),
-          React.createElement("div", { className: "hero-actions" },
-            React.createElement("button", { className: "btn", onClick: () => document.getElementById("products").scrollIntoView({ behavior: "smooth" }) }, "Browse menu"),
-            React.createElement("button", { className: "btn secondary", onClick: () => setView(user ? "cart" : "shop") }, user ? "View cart" : "Create account")
+            React.createElement("div", { className: "hero-actions" },
+              React.createElement("button", { className: "btn", onClick: () => document.getElementById("products").scrollIntoView({ behavior: "smooth" }) }, "Browse menu"),
+            React.createElement("button", { className: "btn secondary", onClick: () => setView(user ? "cart" : "shop") }, user ? "View cart" : "Create account"),
+            React.createElement("button", { className: "btn secondary", onClick: () => setView("map") }, "View map")
           )
         ),
         user
@@ -631,6 +674,88 @@ function OrdersView({ orders }) {
             ))
           )
         : React.createElement("div", { className: "empty" }, "No orders yet.")
+    )
+  );
+}
+
+function MapView({ locations }) {
+  const mapNode = useRef(null);
+  const map = useRef(null);
+  const markers = useRef([]);
+  const [selected, setSelected] = useState(locations[0]);
+
+  useEffect(() => {
+    if (!mapNode.current || !window.L) return;
+
+    map.current = L.map(mapNode.current, {
+      zoomControl: true,
+      scrollWheelZoom: true
+    }).setView([9.03, 38.76], 12);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map.current);
+
+    markers.current = locations.map(location => {
+      const marker = L.marker(location.coordinates)
+        .addTo(map.current)
+        .bindPopup(`<strong>${location.name}</strong><br>${location.area}<br>${location.eta}`);
+
+      marker.on("click", () => setSelected(location));
+
+      return marker;
+    });
+
+    return () => {
+      markers.current = [];
+      map.current?.remove();
+      map.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selected || !map.current) return;
+
+    map.current.flyTo(selected.coordinates, 14, {
+      duration: 0.7
+    });
+
+    const marker = markers.current.find(item => {
+      const position = item.getLatLng();
+      return position.lat === selected.coordinates[0] && position.lng === selected.coordinates[1];
+    });
+
+    marker?.openPopup();
+  }, [selected]);
+
+  return (
+    React.createElement("section", null,
+      React.createElement("div", { className: "section-head" },
+        React.createElement("div", null,
+          React.createElement("h2", null, "Delivery Map"),
+          React.createElement("p", { className: "muted" }, "Explore pickup hubs, restaurant clusters, and delivery coverage.")
+        )
+      ),
+      React.createElement("div", { className: "map-layout" },
+        React.createElement("div", { className: "map-shell" },
+          React.createElement("div", { className: "delivery-map", ref: mapNode })
+        ),
+        React.createElement("aside", { className: "panel map-panel" },
+          React.createElement("h2", null, "Locations"),
+          React.createElement("div", { className: "location-list" },
+            locations.map(location => React.createElement("button", {
+              key: location.name,
+              className: `location-card ${selected?.name === location.name ? "active" : ""}`,
+              onClick: () => setSelected(location)
+            },
+              React.createElement("strong", null, location.name),
+              React.createElement("span", { className: "muted small" }, `${location.type} - ${location.area}`),
+              React.createElement("span", { className: "eta" }, location.eta)
+            ))
+          )
+        )
+      )
     )
   );
 }
