@@ -245,6 +245,12 @@ h3 {
   width: 100%;
 }
 
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+}
+
 .panel {
   padding: 20px;
   background: var(--surface);
@@ -535,9 +541,27 @@ h3 {
   box-shadow: none;
 }
 
+.selected-place {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  margin-bottom: 14px;
+  background: #f7f3ea;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.selected-place h3,
+.selected-place p {
+  margin-bottom: 0;
+}
+
 .location-list {
   display: grid;
   gap: 10px;
+  max-height: 390px;
+  overflow: auto;
+  padding-right: 3px;
 }
 
 .location-card {
@@ -561,6 +585,25 @@ h3 {
   color: var(--green);
   font-size: 0.86rem;
   font-weight: 900;
+}
+
+.user-location-marker {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  background: rgba(47, 111, 145, 0.18);
+  border-radius: 50%;
+}
+
+.user-location-marker span {
+  display: block;
+  width: 13px;
+  height: 13px;
+  background: var(--blue);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 3px 12px rgba(47, 111, 145, 0.4);
 }
 
 @media (max-width: 920px) {
